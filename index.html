@@ -50,18 +50,46 @@ header h1{font-size:25px}header .subtitle{font-size:12px;margin:2px 0 10px}
 .universe{height:calc(100vh - 170px);max-height:595px}
 .graph{height:calc(100vh - 450px);min-height:225px;max-height:350px}
 @media(max-width:950px){.topHeader{flex-wrap:wrap}.headerCamera{margin-left:auto}.universe{height:430px}.graph{height:300px}}
+
+/* 실제 뷰포트 기반 레이아웃: 화면이 줄어도 canvas 내용은 재렌더링 */
+@media (min-width:951px){
+ html,body{height:100%;overflow:hidden}
+ .wrap{height:100dvh;display:flex;flex-direction:column;padding:7px 12px 9px;overflow:hidden}
+ .topHeader{flex:0 0 auto;margin-bottom:6px}
+ header h1{font-size:23px}
+ header .subtitle{font-size:11px;margin:0}
+ .layout{flex:1;min-height:0;grid-template-columns:1.04fr .96fr;gap:10px}
+ .panel{min-height:0;display:flex;flex-direction:column;padding:8px 10px}
+ .panel h2{font-size:14px;margin:0 0 5px}
+ .universe{flex:1 1 0;min-height:0;height:100%;max-height:none;aspect-ratio:auto}
+ /* 연안 시뮬레이션을 이전 높이의 약 2/3로 줄이고 차이를 조위 그래프에 배분 */
+ .graph{flex:0 0 clamp(320px, 48vh, 385px);min-height:0;height:auto;max-height:none}
+ .coast{flex:1 1 0;min-height:0;height:auto;max-height:none;margin-top:5px}
+ .legend{flex:none;margin-top:5px}
+ .panel>.controls{flex:none}
+ .graphControls{flex-wrap:nowrap;gap:5px;margin:2px 0 7px;white-space:nowrap;justify-content:space-between}
+ .graphControls label,.graphControls .setting-label{font-size:11px}
+ .graphControls select,.graphControls button{font-size:11px;padding:5px 6px}
+ .graphControls .declButtons{gap:2px}
+ .graphControls .declButtons button{padding:5px 6px}
+ .graphControls #showExtrema{padding:5px 6px}
+ .panel h2[style]{margin-top:6px!important}
+ .panel>.hint{display:none}
+ .headerCamera .videoWrap{height:35px}
+}
+@media(max-width:950px){.graphControls{flex-wrap:wrap}.universe{height:440px;max-height:none}.graph{height:300px;max-height:none}}
 </style>
 </head>
-<body><main class="wrap"><header class="topHeader"><div class="headerTitle"><h1>🌊 손동작으로 탐구하는 조석 현상</h1><p class="subtitle">주먹 ✊ 운동 시작 · 펼친 손 ✋ 일시정지 | 지구 자전과 달 공전에 따른 해수면 높이 변화를 관찰하세요.</p></div><div class="headerCamera"><div class="videoWrap"><video id="camera" playsinline muted autoplay></video></div><div class="cameraText"><strong id="gesture">카메라 꺼짐</strong><span id="cameraMsg">카메라로 손동작을 인식합니다.</span></div><button id="cameraButton">📷 카메라 켜기</button></div></header>
-<div class="layout"><section class="panel"><h2>🌍 지구–달 운동 모형 <span id="status" class="pill">정지</span></h2><canvas id="scene" class="universe" width="820" height="650" aria-label="지구와 달의 공전 및 조석 융기 시각화"></canvas><div class="legend"><span><i class="dot" style="background:#4de0d4"></i>달에 의한 조석 융기(과장)</span><span><i class="dot" style="background:#ffcb74"></i>선택 위도 관측 지점</span></div><div class="controls"><button id="toggle" class="primary">▶ 운동 시작</button><button id="reset">↺ 처음으로</button><label for="speed">시간 속도</label><input id="speed" type="range" min="0.3" max="9" step="0.1" value="2.3"/><strong id="speedLabel">2.3 시간/초</strong></div><p class="hint">마우스 또는 터치로 모형을 드래그하면 지구를 중심으로 관찰 방향을 바꿀 수 있습니다. 황색 선은 지구 밖으로 나온 자전축이며, 달의 최대 적위를 바꾸면 공전 궤도면의 경사가 바뀝니다. (선택값은 달의 순간 적위가 아닌 최대 적위입니다.) 크기·거리와 조석 융기량은 과장했습니다.</p></section>
-<section class="panel"><h2>📈 위도별 해수면 높이 변화</h2><div class="controls"><label for="lat">관측 위도</label><select id="lat"><option value="0">적도 (0°)</option><option value="15">북위 15°</option><option value="30" selected>북위 30°</option><option value="45">북위 45°</option><option value="60">북위 60°</option><option value="75">북위 75°</option><option value="90">북극 (90°)</option><option value="-30">남위 30°</option><option value="-60">남위 60°</option></select><span class="setting-label">달의 최대 적위</span><div class="declButtons" role="group" aria-label="달의 적위 선택"><button class="declBtn selected" data-decl="0" aria-pressed="true">0°</button><button class="declBtn" data-decl="23.5" aria-pressed="false">23.5°</button><button class="declBtn" data-decl="28.5" aria-pressed="false">28.5°</button></div><label for="duration">표시 구간</label><select id="duration"><option value="26">26시간</option><option value="50" selected>50시간</option><option value="100">100시간</option></select></div><div class="controls"><button id="showExtrema">● 만조·간조 점 표시</button><span id="tideType" class="hint">반일주조: 고조·저조의 높이가 비슷함</span></div><canvas id="chart" class="graph" width="820" height="500" aria-label="시간에 따른 상대적 해수면 높이 그래프"></canvas><h2 style="margin-top:17px">🏖️ 연안 해수면 시뮬레이션</h2><canvas id="coast" class="coast" width="820" height="270" aria-label="연안에서 조석에 따라 변하는 해수면"></canvas><p class="hint">해수면의 상하 변화를 강조한 개념 모형입니다. 실제 해안에서의 진폭과 수위는 지형 등의 영향을 받습니다.</p><p class="footnote">그래프는 <strong>달의 적위를 일정하게 유지하는 이상적인 평형 조석</strong>을 표현합니다. 적위가 커지면 하루 두 번 나타나는 만조·간조의 높이에 차이가 생길 수 있습니다. 수위는 실제 m 단위가 아닌 정규화된 상대값입니다. 태양의 인력, 지형, 수심, 해안선 및 바닷물의 동적 반응은 고려하지 않습니다.</p></section></div>
+<body><main class="wrap"><header class="topHeader"><div class="headerTitle"><h1>🌊 손동작으로 탐구하는 조석 현상</h1><p class="subtitle">✊ 운동 시작 · ✋ 한 손 펴기: 정지 · ✋✋ 두 손 펴고 위아래 이동: 모형 관측 방향 변경</p></div><div class="headerCamera"><div class="videoWrap"><video id="camera" playsinline muted autoplay></video></div><div class="cameraText"><strong id="gesture">카메라 꺼짐</strong><span id="cameraMsg">카메라로 손동작을 인식합니다.</span></div><button id="cameraButton">📷 카메라 켜기</button></div></header>
+<div class="layout"><section class="panel"><h2>🌍 지구–달 운동 모형 <span id="status" class="pill">정지</span></h2><canvas id="scene" class="universe" width="820" height="650" aria-label="지구와 달의 공전 및 조석 융기 시각화"></canvas><div class="legend"><span><i class="dot" style="background:#4de0d4"></i>달에 의한 조석 융기(과장)</span><span><i class="dot" style="background:#ffcb74"></i>선택 위도 관측 지점</span></div><div class="controls"><button id="toggle" class="primary">▶ 운동 시작</button><button id="reset">↺ 처음으로</button><label for="speed">시간 속도</label><input id="speed" type="range" min="0.3" max="9" step="0.1" value="2.3"/><strong id="speedLabel">2.3 시간/초</strong></div><p class="hint">마우스 드래그 또는 펼친 두 손바닥의 위아래 이동으로 지구 중심의 관찰 방향을 바꿀 수 있습니다. 황색 선은 지구 밖으로 나온 자전축이며, 달의 최대 적위를 바꾸면 공전 궤도면의 경사가 바뀝니다. (선택값은 달의 순간 적위가 아닌 최대 적위입니다.) 크기·거리와 조석 융기량은 과장했습니다.</p></section>
+<section class="panel"><h2>📈 위도별 해수면 높이 변화</h2><div class="controls graphControls"><label for="lat">관측 위도</label><select id="lat"><option value="0">적도 (0°)</option><option value="15">북위 15°</option><option value="30" selected>북위 30°</option><option value="45">북위 45°</option><option value="60">북위 60°</option><option value="75">북위 75°</option><option value="90">북극 (90°)</option><option value="-30">남위 30°</option><option value="-60">남위 60°</option></select><span class="setting-label">최대 적위</span><div class="declButtons" role="group" aria-label="달의 적위 선택"><button class="declBtn selected" data-decl="0" aria-pressed="true">0°</button><button class="declBtn" data-decl="23.5" aria-pressed="false">23.5°</button><button class="declBtn" data-decl="28.5" aria-pressed="false">28.5°</button></div><label for="duration">구간</label><select id="duration"><option value="26">26시간</option><option value="50" selected>50시간</option><option value="100">100시간</option></select><button id="showExtrema">● 만조·간조 표시</button></div><canvas id="chart" class="graph" width="820" height="500" aria-label="시간에 따른 상대적 해수면 높이 그래프"></canvas><h2 style="margin-top:17px">🏖️ 연안 해수면 시뮬레이션</h2><canvas id="coast" class="coast" width="820" height="270" aria-label="연안에서 조석에 따라 변하는 해수면"></canvas><p class="hint">해파의 전파와 구분하도록 물결의 수평 이동을 제거하고 해수면 높이의 상하 변화만 표현했습니다. 실제 해안의 조위는 지형 등의 영향을 받습니다.</p><p class="footnote">그래프는 <strong>달의 적위를 일정하게 유지하는 이상적인 평형 조석</strong>을 표현합니다. 적위가 커지면 하루 두 번 나타나는 만조·간조의 높이에 차이가 생길 수 있습니다. 수위는 실제 m 단위가 아닌 정규화된 상대값입니다. 태양의 인력, 지형, 수심, 해안선 및 바닷물의 동적 반응은 고려하지 않습니다.</p></section></div>
 <div class="bottom"><strong>🔎 수업에서 관찰할 점</strong> · 같은 장소에서 대체로 약 12시간 25분 간격의 만조가 나타나는 이유는? · 위도를 높이면 조석 진폭이 왜 작아지는가? · 달의 공전 방향이 지구 자전과 같으면 조석 주기는 어떻게 바뀌는가? <span style="display:block;margin-top:5px;color:#9fc0d2">참고: 적위를 0°에서 벗어나게 하면 하루 두 번의 만조·간조 높이가 달라지는 일조부등을 살펴볼 수 있습니다. 적도에서는 이 단순 모형의 일조부등이 나타나지 않습니다.</span></div>
 </main>
 <script>
 'use strict';
 const scene=document.getElementById('scene'),sctx=scene.getContext('2d');const chart=document.getElementById('chart'),ctx=chart.getContext('2d');
 const $=x=>document.getElementById(x),tau=2*Math.PI;
-const HOUR=3600, EARTH_DAY=23.9344696, MOON_ORBIT=27.321661*24;let decl=0,showExtrema=false;const coast=$("coast"),cctx=coast.getContext("2d");let t=0,playing=false,last=performance.now(),speed=2.3,lat=30,windowHours=50,stream=null,hands=null,cameraActive=false,detectBusy=false,gestureHistory=[],lastGestureChange=0;
+const HOUR=3600, EARTH_DAY=23.9344696, MOON_ORBIT=27.321661*24;let decl=0,showExtrema=false;const coast=$("coast"),cctx=coast.getContext("2d");let t=0,playing=false,last=performance.now(),speed=2.3,lat=30,windowHours=50,stream=null,hands=null,cameraActive=false,detectBusy=false,gestureHistory=[],lastGestureChange=0,twoPalmView={active:false,smoothedY:0,appliedY:0};
 const earthAngle=()=>tau*t/EARTH_DAY,moonAngle=()=>tau*t/MOON_ORBIT;
 const phase=(at)=>tau*at*(1/EARTH_DAY-1/MOON_ORBIT);
 // Tide generating potential at latitude phi, lunar declination 0:
@@ -82,7 +110,7 @@ function tide(at,latitude=lat){
 }
 function amplitudeBound(){let b=0;for(let i=0;i<=720;i++)b=Math.max(b,Math.abs(tide(i*25/720)));return Math.max(.84,b*1.13)}
 function applyPlay(value){playing=value;$('status').textContent=value?'운동 중':'정지';$('status').className='pill'+(value?' play':'');$('toggle').textContent=value?'⏸ 일시정지':'▶ 운동 시작';}
-$('toggle').addEventListener('click',()=>applyPlay(!playing));$('reset').addEventListener('click',()=>{t=0;applyPlay(false);render()});$('speed').addEventListener('input',e=>{speed=+e.target.value;$('speedLabel').textContent=speed.toFixed(1)+' 시간/초'});$('lat').addEventListener('change',e=>{lat=+e.target.value;render()});$('duration').addEventListener('change',e=>{windowHours=+e.target.value;render()});document.querySelectorAll('.declBtn').forEach(btn=>btn.addEventListener('click',()=>{decl=Number(btn.dataset.decl);document.querySelectorAll('.declBtn').forEach(b=>{const selected=b===btn;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});$('tideType').textContent=decl===0?'적위 0°: 만조·간조 높이가 비슷함':'최대 적위 '+decl+'°: 공전 중 적위·일조부등 변화';render()}));$('showExtrema').addEventListener('click',()=>{showExtrema=!showExtrema;$('showExtrema').textContent=showExtrema?'✓ 만조·간조 점 숨기기':'● 만조·간조 점 표시';render()});
+$('toggle').addEventListener('click',()=>applyPlay(!playing));$('reset').addEventListener('click',()=>{t=0;applyPlay(false);render()});$('speed').addEventListener('input',e=>{speed=+e.target.value;$('speedLabel').textContent=speed.toFixed(1)+' 시간/초'});$('lat').addEventListener('change',e=>{lat=+e.target.value;render()});$('duration').addEventListener('change',e=>{windowHours=+e.target.value;render()});document.querySelectorAll('.declBtn').forEach(btn=>btn.addEventListener('click',()=>{decl=Number(btn.dataset.decl);document.querySelectorAll('.declBtn').forEach(b=>{const selected=b===btn;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});render()}));$('showExtrema').addEventListener('click',()=>{showExtrema=!showExtrema;$('showExtrema').textContent=showExtrema?'✓ 점 숨기기':'● 만조·간조 표시';render()});
 function line(x1,y1,x2,y2,color,w=1,dash=[]){sctx.strokeStyle=color;sctx.lineWidth=w;sctx.setLineDash(dash);sctx.beginPath();sctx.moveTo(x1,y1);sctx.lineTo(x2,y2);sctx.stroke();sctx.setLineDash([])}
 // Orbit camera around the Earth's center; dragging changes view, not physical motion.
 let yaw=-1.06,pitch=.40;
@@ -116,7 +144,7 @@ const project=(x,y,z,cx,cy,scale=1)=>{const p=world(x,y,z);return [cx+scale*(rig
 const depth=(x,y,z)=>{const p=world(x,y,z);return view[0]*p[0]+view[1]*p[1]+view[2]*p[2]};
 const sph=(latitude,longitude)=>{const p=latitude*Math.PI/180;return [Math.cos(p)*Math.cos(longitude),Math.cos(p)*Math.sin(longitude),Math.sin(p)]};
 // Scale the Earth and lunar orbit to the canvas; leave a margin for the Moon and its label.
-function drawScene(){const w=scene.width,h=scene.height,cx=w*.48,cy=h*.52,R=Math.min(w*.145,h*.183),orb=Math.min(w*.345,h*.43),a=earthAngle(),m=moonAngle(),d=decl*Math.PI/180;
+function drawScene(){const w=scene.clientWidth,h=scene.clientHeight,cx=w*.49,cy=h*.51,R=Math.min(w*.205,h*.245),orb=Math.min(w*.37,h*.395),a=earthAngle(),m=moonAngle(),d=decl*Math.PI/180;
 sctx.clearRect(0,0,w,h);
 for(let i=0;i<90;i++){let x=(i*131.41)%w,y=(i*277.9+33)%h;sctx.fillStyle=`rgba(210,233,255,${.12+(i%5)*.1})`;sctx.fillRect(x,y,1.8,1.8)}
 // Lunar declination is held fixed during each selected multi-day observation interval.
@@ -157,34 +185,181 @@ sctx.fillStyle='#ffd897';sctx.font='bold 16px sans-serif';sctx.fillText('자전�
 // A fixed terrestrial observer on selected latitude (hidden when on far side).
 const obs=sph(lat,a);const [px,py]=project(...obs,cx,cy,R*1.02);if(depth(...obs)>0){sctx.beginPath();sctx.arc(px,py,7,0,tau);sctx.fillStyle='#ffcb74';sctx.fill();sctx.strokeStyle='#fff1d5';sctx.lineWidth=2;sctx.stroke()}
 const mg=sctx.createRadialGradient(mx-12,my-13,1,mx,my,32);mg.addColorStop(0,'#fbf9e9');mg.addColorStop(1,'#909ba9');sctx.fillStyle=mg;sctx.beginPath();sctx.arc(mx,my,29,0,tau);sctx.fill();for(let i=0;i<8;i++){sctx.fillStyle='#858f9d88';sctx.beginPath();sctx.arc(mx-17+(i*17)%35,my-15+(i*13)%28,2+i%3*2,0,tau);sctx.fill()}
-sctx.fillStyle='#ecf6ff';sctx.textAlign='center';sctx.font='bold 20px sans-serif';sctx.fillText('지구',cx,cy+R+34);sctx.fillText('달',mx,my-38);sctx.fillStyle='#a9c8db';sctx.font='16px sans-serif';sctx.fillText('최대 달 적위 '+decl+'° · 현재 '+(Math.asin(moon3[2])*180/Math.PI).toFixed(1)+'°',w*.44,h-20);sctx.textAlign='left';sctx.fillStyle='#ffdb9b';sctx.fillText('● 관측 위치 (앞면에서 표시)',15,27);
+sctx.fillStyle='#ecf6ff';sctx.textAlign='center';sctx.font='bold 20px sans-serif';sctx.fillText('지구',cx,cy+R+34);sctx.fillText('달',mx,my-38);sctx.fillStyle='#a9c8db';sctx.font='12px sans-serif';sctx.fillText('최대 달 적위 '+decl+'° · 현재 '+(Math.asin(moon3[2])*180/Math.PI).toFixed(1)+'°',w*.44,h-20);sctx.textAlign='left';sctx.fillStyle='#ffdb9b';sctx.fillText('● 관측 위치 (앞면에서 표시)',15,27);
 }
 function extremaBetween(start,end){const out=[],step=.09;let prev=tide(start+step)-tide(start),lastSign=Math.sign(prev);for(let at=start+step*2;at<end;at+=step){let slope=tide(at)-tide(at-step),sign=Math.sign(slope);if(sign&&lastSign&&sign!==lastSign){let a=at-step*2,b=at;for(let k=0;k<23;k++){const mid=(a+b)/2,der=tide(mid+.0001)-tide(mid-.0001);if((der>0)=== (lastSign>0))a=mid;else b=mid}let when=(a+b)/2;out.push({time:when,value:tide(when),kind:lastSign>0?'만조':'간조'})}if(sign)lastSign=sign}return out.filter(p=>p.time>=start&&p.time<=end)}
-function drawCoast(){const w=coast.width,h=coast.height;cctx.clearRect(0,0,w,h);let sea=tide(t),bound=amplitudeBound(),surface=130-sea/bound*43;
-const sky=cctx.createLinearGradient(0,0,0,surface);sky.addColorStop(0,'#77bded');sky.addColorStop(1,'#c6e7f1');cctx.fillStyle=sky;cctx.fillRect(0,0,w,surface);
-cctx.fillStyle='#cfe1eb';cctx.beginPath();cctx.moveTo(0,98);cctx.lineTo(90,68);cctx.lineTo(220,99);cctx.lineTo(310,73);cctx.lineTo(475,115);cctx.lineTo(590,92);cctx.lineTo(w,110);cctx.lineTo(w,surface);cctx.lineTo(0,surface);cctx.fill();
-let ocean=cctx.createLinearGradient(0,surface,0,h);ocean.addColorStop(0,'#2db7cd');ocean.addColorStop(1,'#0a527f');cctx.fillStyle=ocean;cctx.fillRect(0,surface,w,h-surface);
-// Fixed bedrock slopes upward on right; water overlays the beach's low end.
-cctx.fillStyle='#e4c58d';cctx.beginPath();cctx.moveTo(w*.62,h);cctx.quadraticCurveTo(w*.75,180,w*.88,145);cctx.lineTo(w,100);cctx.lineTo(w,h);cctx.closePath();cctx.fill();cctx.strokeStyle='#f5dba6';cctx.lineWidth=3;cctx.stroke();
-for(let i=0;i<7;i++){let x=(i*137+t*13)%650,y=surface+22+i*15;cctx.strokeStyle='#b8f5fc8a';cctx.lineWidth=2;cctx.beginPath();cctx.moveTo(x,y);cctx.quadraticCurveTo(x+20,y-3,x+44,y);cctx.stroke()}
-cctx.setLineDash([7,7]);cctx.strokeStyle='#fff5ae';cctx.lineWidth=2;cctx.beginPath();cctx.moveTo(0,130);cctx.lineTo(w*.62,130);cctx.stroke();cctx.setLineDash([]);
-cctx.font='bold 18px sans-serif';cctx.fillStyle='#083452';cctx.fillText('연안',w-90,55);cctx.fillStyle='#fff';cctx.fillText('현재 수위 '+(sea>=0?'+':'')+sea.toFixed(2),22,surface+33);cctx.fillStyle='#fff2b5';cctx.font='14px sans-serif';cctx.fillText('평균 기준선',15,122);
+function drawCoast(){
+  const w=coast.clientWidth,h=coast.clientHeight;
+  cctx.clearRect(0,0,w,h);
+  const sea=tide(t),bound=amplitudeBound();
+  const meanY=h*.51;
+  // The water surface is a HORIZONTAL line. Its Y coordinate is the only
+  // time-dependent position in this coastal view: no wave propagation or flow.
+  const surface=meanY-(sea/bound)*h*.17;
+
+  // Stationary sky and distant hills.
+  const sky=cctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,'#79bee9');sky.addColorStop(1,'#d9edf3');
+  cctx.fillStyle=sky;cctx.fillRect(0,0,w,h);
+  cctx.fillStyle='#cfe1eb';cctx.beginPath();
+  cctx.moveTo(0,h*.36);cctx.lineTo(w*.11,h*.25);
+  cctx.lineTo(w*.27,h*.37);cctx.lineTo(w*.38,h*.27);
+  cctx.lineTo(w*.58,h*.43);cctx.lineTo(w*.72,h*.34);
+  cctx.lineTo(w,h*.40);cctx.lineTo(w,h);cctx.lineTo(0,h);cctx.fill();
+
+  // Water is a still, level body: changing sea level only moves the top edge
+  // straight up/down. No moving ripple marks or scrolling texture.
+  const ocean=cctx.createLinearGradient(0,surface,0,h);
+  ocean.addColorStop(0,'#2db7cd');ocean.addColorStop(1,'#0a527f');
+  cctx.fillStyle=ocean;cctx.fillRect(0,surface,w,h-surface);
+  cctx.strokeStyle='#b7f7f5';cctx.lineWidth=2;
+  cctx.beginPath();cctx.moveTo(0,surface+.5);cctx.lineTo(w,surface+.5);cctx.stroke();
+
+  // Stationary coastline: the sand never moves with time.
+  cctx.fillStyle='#e4c58d';cctx.beginPath();
+  cctx.moveTo(w*.62,h);cctx.quadraticCurveTo(w*.75,h*.68,w*.88,h*.54);
+  cctx.lineTo(w,h*.37);cctx.lineTo(w,h);cctx.closePath();cctx.fill();
+  cctx.strokeStyle='#f5dba6';cctx.lineWidth=3;cctx.stroke();
+
+  // Fixed mean-level reference for comparing low and high tide.
+  cctx.setLineDash([7,7]);cctx.strokeStyle='#fff5ae';cctx.lineWidth=2;
+  cctx.beginPath();cctx.moveTo(0,meanY);cctx.lineTo(w*.62,meanY);cctx.stroke();
+  cctx.setLineDash([]);
+
+  // A stationary tide gauge makes the vertical-only change explicit.
+  const gx=Math.max(58,w*.10),top=h*.15,bottom=h*.84;
+  cctx.lineWidth=3;cctx.strokeStyle='#eaf3f4';
+  cctx.beginPath();cctx.moveTo(gx,top);cctx.lineTo(gx,bottom);cctx.stroke();
+  for(let k=-2;k<=2;k++){
+    const y=meanY+k*h*.115;
+    cctx.strokeStyle='#eaf3f4';cctx.lineWidth=1.7;
+    cctx.beginPath();cctx.moveTo(gx-5,y);cctx.lineTo(gx+7,y);cctx.stroke();
+  }
+  // Only this marker, attached to the level surface, moves vertically.
+  cctx.fillStyle='#ffd17e';cctx.beginPath();
+  cctx.moveTo(gx+1,surface);cctx.lineTo(gx+14,surface-7);
+  cctx.lineTo(gx+14,surface+7);cctx.closePath();cctx.fill();
+
+  cctx.textAlign='left';cctx.font='bold 13px sans-serif';
+  cctx.fillStyle='#083452';cctx.fillText('연안',w-48,22);
+  cctx.fillStyle='#fff';cctx.fillText('수위 '+(sea>=0?'+':'')+sea.toFixed(2),16,h-12);
+  cctx.fillStyle='#fff2b5';cctx.font='11px sans-serif';
+  cctx.fillText('평균 기준선',15,meanY-5);
 }
-function drawChart(){const w=chart.width,h=chart.height;ctx.clearRect(0,0,w,h);const L=76,R=22,T=32,B=66,W=w-L-R,H=h-T-B;const start=Math.max(0,t-windowHours*.25),end=start+windowHours;const tx=at=>L+(at-start)/windowHours*W;const bound=amplitudeBound(),ty=v=>T+(1-(v+bound)/(2*bound))*H;
-ctx.strokeStyle='#304960';ctx.lineWidth=1;ctx.fillStyle='#a8c1d5';ctx.font='16px sans-serif';ctx.textAlign='right';Array.from({length:7},(_,i)=>(i-3)*bound/3).forEach(v=>{const y=ty(v);ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(w-R,y);ctx.stroke();ctx.fillText(v.toFixed(2),L-10,y+5)});ctx.textAlign='center';const step=windowHours<=26?4:windowHours<=50?8:16;for(let k=Math.ceil(start/step)*step;k<=end;k+=step){const x=tx(k);ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,h-B);ctx.stroke();ctx.fillText(k+'h',x,h-B+26)}
-ctx.fillStyle='#a8c1d5';ctx.font='16px sans-serif';ctx.fillText('경과 시간',L+W/2,h-12);ctx.save();ctx.translate(20,T+H/2);ctx.rotate(-Math.PI/2);ctx.fillText('상대 해수면 높이',0,0);ctx.restore();
+function drawChart(){const w=chart.clientWidth,h=chart.clientHeight;ctx.clearRect(0,0,w,h);const L=57,R=16,T=20,B=43,W=w-L-R,H=h-T-B;const start=Math.max(0,t-windowHours*.25),end=start+windowHours;const tx=at=>L+(at-start)/windowHours*W;const bound=amplitudeBound(),ty=v=>T+(1-(v+bound)/(2*bound))*H;
+ctx.strokeStyle='#304960';ctx.lineWidth=1;ctx.fillStyle='#a8c1d5';ctx.font='12px sans-serif';ctx.textAlign='right';Array.from({length:7},(_,i)=>(i-3)*bound/3).forEach(v=>{const y=ty(v);ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(w-R,y);ctx.stroke();ctx.fillText(v.toFixed(2),L-7,y+4)});ctx.textAlign='center';const step=windowHours<=26?4:windowHours<=50?8:16;for(let k=Math.ceil(start/step)*step;k<=end;k+=step){const x=tx(k);ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,h-B);ctx.stroke();ctx.fillText(k+'h',x,h-B+18)}
+ctx.fillStyle='#a8c1d5';ctx.font='12px sans-serif';ctx.fillText('경과 시간',L+W/2,h-6);ctx.save();ctx.translate(15,T+H/2);ctx.rotate(-Math.PI/2);ctx.fillText('상대 해수면 높이',0,0);ctx.restore();
 ctx.lineWidth=3.5;ctx.strokeStyle='#50e7df';ctx.beginPath();for(let k=0;k<=700;k++){let at=start+k/700*windowHours,x=tx(at),y=ty(tide(at));if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();
-if(showExtrema){for(const pt of extremaBetween(start,end)){const x=tx(pt.time),y=ty(pt.value);ctx.beginPath();ctx.arc(x,y,6,0,tau);ctx.fillStyle=pt.kind==='만조'?'#ffcd75':'#eaa2f8';ctx.fill();ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText(pt.kind,x,y+(pt.kind==='만조'?-13:21));}}
+if(showExtrema){for(const pt of extremaBetween(start,end)){const x=tx(pt.time),y=ty(pt.value);ctx.beginPath();ctx.arc(x,y,6,0,tau);ctx.fillStyle=pt.kind==='만조'?'#ffcd75':'#eaa2f8';ctx.fill();ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(pt.kind,x,y+(pt.kind==='만조'?-13:21));}}
 if(t>=start&&t<=end){let x=tx(t),y=ty(tide(t));ctx.strokeStyle='#ffca77';ctx.lineWidth=2;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,h-B);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffcb74';ctx.beginPath();ctx.arc(x,y,7,0,tau);ctx.fill();}
 }
-function render(){drawScene();drawChart();drawCoast()}
+function fitCanvas(canvas,context){
+  const scale=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(canvas.clientWidth*scale));
+  const h=Math.max(1,Math.round(canvas.clientHeight*scale));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+  context.setTransform(scale,0,0,scale,0,0);
+}
+function render(){fitCanvas(scene,sctx);fitCanvas(chart,ctx);fitCanvas(coast,cctx);drawScene();drawChart();drawCoast()}
+window.addEventListener('resize',render);
+if('ResizeObserver' in window){new ResizeObserver(()=>render()).observe(scene);new ResizeObserver(()=>render()).observe(chart);new ResizeObserver(()=>render()).observe(coast);}
 function loop(now){const dt=Math.min(.08,(now-last)/1000);last=now;if(playing)t+=dt*speed;render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
-// Evaluate curl using distance fingertip to wrist compared with corresponding MCP joint.
-function classify(lms){let folded=0,extended=0;for(const [tip,mcp] of [[8,5],[12,9],[16,13],[20,17]]){let td=Math.hypot(lms[tip].x-lms[0].x,lms[tip].y-lms[0].y),md=Math.hypot(lms[mcp].x-lms[0].x,lms[mcp].y-lms[0].y);if(td<md*1.24)folded++;if(td>md*1.55)extended++;}if(folded>=3)return 'fist';if(extended>=4)return 'open';return 'unknown'}
-function handleLandmarks(results){if(!results.multiHandLandmarks?.length){gestureHistory=[];$('gesture').textContent='손을 카메라에 보여주세요';return}const candidate=classify(results.multiHandLandmarks[0]);gestureHistory.push(candidate);if(gestureHistory.length>7)gestureHistory.shift();const good=gestureHistory.filter(x=>x===candidate).length>=5;if(!good)return;if(candidate==='fist'){$('gesture').textContent='✊ 주먹 인식 → 운동 시작';if(!playing&&performance.now()-lastGestureChange>500){applyPlay(true);lastGestureChange=performance.now()}}else if(candidate==='open'){$('gesture').textContent='✋ 펼친 손 인식 → 일시정지';if(playing&&performance.now()-lastGestureChange>500){applyPlay(false);lastGestureChange=performance.now()}}else $('gesture').textContent='손 모양을 조정해주세요'}
-async function startCamera(){if(!navigator.mediaDevices?.getUserMedia){throw new Error('이 환경에서는 카메라를 사용할 수 없습니다. HTTPS 또는 localhost에서 실행하세요.')}if(typeof Hands==='undefined'){throw new Error('MediaPipe를 불러오지 못했습니다. 인터넷 연결을 확인하세요.')}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480},audio:false});const video=$('camera');video.srcObject=stream;await video.play();hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`});hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:.65,minTrackingConfidence:.6});hands.onResults(handleLandmarks);cameraActive=true;$('cameraButton').textContent='📷 카메라 끄기';$('cameraMsg').textContent='주먹은 시작, 펼친 손은 정지입니다. 인식이 어려우면 손을 화면 중앙에 보여주세요.';detectLoop()}
+// MediaPipe Hands: one fist = play, one open hand = pause,
+// BOTH open hands = orbit the viewing camera vertically around Earth.
+// Opening two hands never changes the simulated Earth's/Moon's motion.
+function classify(lms){
+  let folded=0,extended=0;
+  for(const [tip,mcp] of [[8,5],[12,9],[16,13],[20,17]]){
+    const td=Math.hypot(lms[tip].x-lms[0].x,lms[tip].y-lms[0].y);
+    const md=Math.hypot(lms[mcp].x-lms[0].x,lms[mcp].y-lms[0].y);
+    if(td<md*1.24)folded++;
+    if(td>md*1.55)extended++;
+  }
+  if(folded>=3)return 'fist';
+  if(extended>=4)return 'open';
+  return 'unknown';
+}
+// Palm centre instead of fingertips: fingers can bend without moving the palm.
+function palmCenterY(lms){
+  return [0,5,9,13,17].reduce((sum,i)=>sum+lms[i].y,0)/5;
+}
+function resetTwoPalm(){
+  twoPalmView.active=false;
+  twoPalmView.smoothedY=0;
+  twoPalmView.appliedY=0;
+}
+function moveViewWithTwoPalms(left,rightHand){
+  // Using the mean is independent of left/right hand ordering and hand swaps.
+  const y=(palmCenterY(left)+palmCenterY(rightHand))/2;
+  if(!twoPalmView.active){
+    // Anchor the position upon entry: simply presenting two hands does not jump the view.
+    twoPalmView.active=true;
+    twoPalmView.smoothedY=y;
+    twoPalmView.appliedY=y;
+    return;
+  }
+  // Ignore tracking jumps (e.g. one lost hand re-entering the frame).
+  if(Math.abs(y-twoPalmView.smoothedY)>.23){
+    twoPalmView.smoothedY=y;
+    twoPalmView.appliedY=y;
+    return;
+  }
+  twoPalmView.smoothedY+=(y-twoPalmView.smoothedY)*.38;
+  const dy=twoPalmView.smoothedY-twoPalmView.appliedY;
+  if(Math.abs(dy)<.007)return; // Reject small involuntary hand tremors.
+  // Same direction as mouse drag: hands up => scene tilts upward.
+  pitch=Math.max(-Math.PI/2+.06,Math.min(Math.PI/2-.06,pitch+dy*3.5));
+  twoPalmView.appliedY=twoPalmView.smoothedY;
+  setView();
+}
+function handleLandmarks(results){
+  const found=results.multiHandLandmarks||[];
+  if(!found.length){
+    gestureHistory=[];
+    resetTwoPalm();
+    $('gesture').textContent='손을 카메라에 보여주세요';
+    return;
+  }
+  let candidate='unknown';
+  if(found.length>=2){
+    const first=classify(found[0]),second=classify(found[1]);
+    if(first==='open'&&second==='open')candidate='twoOpen';
+    else if(first==='fist'&&second==='fist')candidate='fist';
+    // Mixed gestures deliberately do nothing, to prevent accidental pauses.
+  }else{
+    candidate=classify(found[0]);
+  }
+  gestureHistory.push(candidate);
+  if(gestureHistory.length>7)gestureHistory.shift();
+  const stable=gestureHistory.filter(x=>x===candidate).length>=5;
+  if(!stable){
+    resetTwoPalm();
+    $('gesture').textContent=candidate==='twoOpen'?'✋✋ 두 손 확인 중…':'손 모양 확인 중…';
+    return;
+  }
+  if(candidate==='twoOpen'){
+    $('gesture').textContent='✋✋ 상하 시점 조절';
+    moveViewWithTwoPalms(found[0],found[1]);
+    return; // Takes priority over the one-open-hand pause gesture.
+  }
+  resetTwoPalm();
+  if(candidate==='fist'){
+    $('gesture').textContent='✊ 주먹 인식 → 운동 시작';
+    if(!playing&&performance.now()-lastGestureChange>500){
+      applyPlay(true);lastGestureChange=performance.now();
+    }
+  }else if(candidate==='open'){
+    $('gesture').textContent='✋ 펼친 손 → 일시정지';
+    if(playing&&performance.now()-lastGestureChange>500){
+      applyPlay(false);lastGestureChange=performance.now();
+    }
+  }else{
+    $('gesture').textContent='두 손을 모두 펴거나 한 손 모양을 조정하세요';
+  }
+}
+async function startCamera(){if(!navigator.mediaDevices?.getUserMedia){throw new Error('이 환경에서는 카메라를 사용할 수 없습니다. HTTPS 또는 localhost에서 실행하세요.')}if(typeof Hands==='undefined'){throw new Error('MediaPipe를 불러오지 못했습니다. 인터넷 연결을 확인하세요.')}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480},audio:false});const video=$('camera');video.srcObject=stream;await video.play();hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`});hands.setOptions({maxNumHands:2,modelComplexity:0,minDetectionConfidence:.65,minTrackingConfidence:.6});hands.onResults(handleLandmarks);cameraActive=true;$('cameraButton').textContent='📷 카메라 끄기';$('cameraMsg').textContent='주먹: 시작 · 한 손 펴기: 정지 · 두 손 펴고 위아래 이동: 관측 시점 변경';detectLoop()}
 async function detectLoop(){if(!cameraActive)return;if(!detectBusy&&$('camera').readyState>=2){detectBusy=true;try{await hands.send({image:$('camera')})}catch(e){$('cameraMsg').textContent='인식 오류: '+e.message}finally{detectBusy=false}}if(cameraActive)requestAnimationFrame(detectLoop)}
-function stopCamera(){cameraActive=false;if(stream)stream.getTracks().forEach(x=>x.stop());stream=null;$('camera').srcObject=null;if(hands){hands.close();hands=null}$('gesture').textContent='카메라 꺼짐';$('cameraMsg').textContent='수동 시작/정지 버튼은 계속 사용할 수 있습니다.';$('cameraButton').textContent='📷 카메라 켜기'}
+function stopCamera(){cameraActive=false;gestureHistory=[];resetTwoPalm();if(stream)stream.getTracks().forEach(x=>x.stop());stream=null;$('camera').srcObject=null;if(hands){hands.close();hands=null}$('gesture').textContent='카메라 꺼짐';$('cameraMsg').textContent='수동 시작/정지 버튼은 계속 사용할 수 있습니다.';$('cameraButton').textContent='📷 카메라 켜기'}
 $('cameraButton').addEventListener('click',async()=>{if(cameraActive){stopCamera();return}let btn=$('cameraButton');btn.disabled=true;try{await startCamera()}catch(e){stopCamera();$('cameraMsg').textContent='카메라 연결 실패: '+e.message}finally{btn.disabled=false}});
 window.addEventListener('pagehide',stopCamera);
 </script><script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js"></script>
